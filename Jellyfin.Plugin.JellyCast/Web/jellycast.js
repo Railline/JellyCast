@@ -206,8 +206,14 @@
     let castMenuRequestedAt = 0;
 
     function closeNativeCastMenu(sheet) {
-        sheet.dispatchEvent(new Event('close'));
-        sheet.remove();
+        // dialogHelper owns a wrapper and backdrop around the visible dialog.
+        // Trigger its internal close lifecycle so those click-blocking elements
+        // are cleaned up as well.
+        sheet.classList.add('hide');
+        sheet.dispatchEvent(new CustomEvent('_close', {
+            bubbles: false,
+            cancelable: false
+        }));
     }
 
     function addCastMenuOption() {
