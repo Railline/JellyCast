@@ -41,3 +41,13 @@ test('accepts an additional user and rejects a different account', () => {
     assert.equal(client.belongsToUser(session, 'USER-1'), true);
     assert.equal(client.belongsToUser(session, 'user-2'), false);
 });
+
+test('recognizes Android UI and native playback sessions as the same device', () => {
+    const client = loadClient();
+    assert.equal(
+        client.isSamePhysicalDevice(
+            '824b3ed573f32579',
+            '824b3ed573f32579076de1f7727447e0a316f8d52f63e5e2'),
+        true);
+    assert.equal(client.isSamePhysicalDevice('phone-1', 'desktop-1'), false);
+});

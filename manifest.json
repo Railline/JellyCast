@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "1.0.7.0",
+        "changelog": "Évite de prendre la session native du portable pour un autre appareil et conserve la position avant Pause.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.7/Jellyfin.Plugin.JellyCast_1.0.7.0.zip",
+        "checksum": "4BC256AAE152DE6B1EC89B4F6038C2D6",
+        "timestamp": "2026-07-26T09:20:40Z"
+      },
+      {
         "version": "1.0.6.0",
         "changelog": "Met la source en pause avant le chargement, attend la cible, puis arrête la source. Signale les lecteurs incompatibles.",
         "targetAbi": "10.11.0.0",

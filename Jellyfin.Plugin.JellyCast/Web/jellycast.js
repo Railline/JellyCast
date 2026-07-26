@@ -56,6 +56,13 @@
         return typeof api.deviceId === 'function' ? api.deviceId() : null;
     }
 
+    function isSamePhysicalDevice(firstId, secondId) {
+        if (!firstId || !secondId) return false;
+        const first = String(firstId);
+        const second = String(secondId);
+        return first === second || first.startsWith(second) || second.startsWith(first);
+    }
+
     async function context() {
         const api = apiClient();
         const user = await api.getCurrentUser();
@@ -71,6 +78,7 @@
 
         const sources = sessions.filter(session =>
             session.Id !== target.Id
+            && !isSamePhysicalDevice(session.DeviceId, target.DeviceId)
             && session.NowPlayingItem?.Id
             && belongsToUser(session, user.Id));
 
@@ -78,6 +86,10 @@
     }
 
     async function transfer(source, playback) {
+        // Snapshot the position before sending Pause. Native clients may update or
+        // replace their session object while processing the command.
+        const resumePositionTicks = Number(source.PlayState?.PositionTicks) || 0;
+
         // Freeze the source first so it cannot advance while the destination loads.
         // Some clients acknowledge this endpoint while ignoring the command; their
         // SupportsRemoteControl flag is used below to report that limitation.
@@ -93,7 +105,7 @@
         const query = {
             playCommand: 'PlayNow',
             itemIds: source.NowPlayingItem.Id,
-            startPositionTicks: source.PlayState?.PositionTicks || 0
+            startPositionTicks: resumePositionTicks
         };
         if (source.NowPlayingItem?.MediaSourceId) {
             query.mediaSourceId = source.NowPlayingItem.MediaSourceId;
@@ -309,5 +321,5 @@
         subtree: true
     });
 
-    window.JellyCast = { belongsToUser };
+    window.JellyCast = { belongsToUser, isSamePhysicalDevice };
 })();
