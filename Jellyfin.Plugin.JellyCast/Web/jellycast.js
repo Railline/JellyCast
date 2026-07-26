@@ -68,7 +68,6 @@
         const sources = sessions.filter(session =>
             session.Id !== target.Id
             && session.NowPlayingItem?.Id
-            && session.SupportsRemoteControl !== false
             && belongsToUser(session, user.Id));
 
         return { user, target, sources };
