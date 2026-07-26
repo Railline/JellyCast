@@ -28,9 +28,19 @@ Une mise à jour majeure de l’interface peut donc demander une adaptation des
 sélecteurs. Les clients natifs qui n’embarquent pas Jellyfin Web n’affichent
 pas le bouton, mais peuvent être des cibles s’ils acceptent les commandes.
 
-## Installation manuelle
+## Installation
 
-1. Téléchargez ou compilez `Jellyfin.Plugin.JellyCast.dll`.
+Dans Jellyfin, ouvrez **Tableau de bord → Plugins → Dépôts**, puis ajoutez :
+
+```text
+https://raw.githubusercontent.com/Railline/JellyCast/main/manifest.json
+```
+
+Ouvrez ensuite le catalogue, installez JellyCast et redémarrez le serveur.
+
+### Installation manuelle
+
+1. Téléchargez l’archive de la dernière release, ou compilez la DLL.
 2. Créez un dossier `JellyCast` dans le répertoire `plugins` de Jellyfin.
 3. Copiez la DLL dans ce dossier.
 4. Redémarrez Jellyfin, puis rechargez complètement l’interface web.
