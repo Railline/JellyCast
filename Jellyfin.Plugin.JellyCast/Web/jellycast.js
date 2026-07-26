@@ -179,11 +179,7 @@
         const style = document.createElement('style');
         style.id = 'jellycast-styles';
         style.textContent = `
-            .jellycast-global { position:fixed; z-index:99999; right:1rem; bottom:1rem;
-              display:flex; align-items:center; gap:.45rem; border:0; border-radius:2rem;
-              padding:.65rem .9rem; color:#fff; background:#00a4dc;
-              box-shadow:0 .3rem 1.2rem rgba(0,0,0,.55); font-weight:600; cursor:pointer; }
-            .jellycast-global .material-icons { font-size:1.35rem; }
+            .jellycast-cast-option { width:100%; }
             .jellycast-dialog { position:fixed; inset:0; z-index:100000; display:grid;
               place-items:center; padding:1rem; background:rgba(0,0,0,.7); opacity:0;
               transition:opacity .15s ease; }
@@ -208,29 +204,73 @@
         document.head.appendChild(style);
     }
 
-    function mountButton() {
-        if (document.querySelector('.jellycast-global') || !window.ApiClient) return;
-        const token = typeof window.ApiClient.accessToken === 'function'
-            ? window.ApiClient.accessToken()
-            : true;
-        if (!token) return;
+    let castMenuRequestedAt = 0;
+
+    function closeNativeCastMenu(sheet) {
+        sheet.dispatchEvent(new Event('close'));
+        sheet.remove();
+    }
+
+    function addCastMenuOption() {
+        if (Date.now() - castMenuRequestedAt > 5000) return;
+        const sheets = [...document.querySelectorAll('.actionSheet')];
+        const sheet = sheets.at(-1);
+        const scroller = sheet?.querySelector('.actionSheetScroller');
+        if (!sheet || !scroller) {
+            const prompts = [...document.querySelectorAll('.promptDialog')];
+            const prompt = prompts.at(-1);
+            const anchor = prompt?.querySelector('.btnRemoteControl, .btnDisconnect');
+            if (!prompt || !anchor || prompt.querySelector('.jellycast-cast-option')) return;
+
+            const promptButton = document.createElement('button');
+            promptButton.type = 'button';
+            promptButton.setAttribute('is', 'emby-button');
+            promptButton.className =
+                'jellycast-cast-option button-flat promptDialogButton';
+            promptButton.textContent = t().button;
+            promptButton.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                closeNativeCastMenu(prompt);
+                window.setTimeout(openDialog, 0);
+            }, true);
+            anchor.parentElement.insertBefore(promptButton, anchor);
+            return;
+        }
+
+        if (sheet.querySelector('.jellycast-cast-option')) return;
+
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'jellycast-global';
-        button.setAttribute('aria-label', t().button);
-        button.innerHTML = `<span class="material-icons" aria-hidden="true">cast_connected</span>
-            <span>${t().button}</span>`;
-        button.addEventListener('click', openDialog);
-        document.body.appendChild(button);
+        button.setAttribute('is', 'emby-button');
+        button.className =
+            'jellycast-cast-option listItem listItem-button listItem-border actionSheetMenuItem';
+        button.innerHTML = `
+            <span class="actionsheetMenuItemIcon listItemIcon listItemIcon-transparent
+                material-icons cast_connected" aria-hidden="true"></span>
+            <div class="listItemBody actionsheetListItemBody">
+                <div class="listItemBodyText actionSheetItemText">${t().button}</div>
+            </div>`;
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            closeNativeCastMenu(sheet);
+            window.setTimeout(openDialog, 0);
+        }, true);
+        scroller.insertBefore(button, scroller.firstChild);
     }
 
     addStyles();
-    mountButton();
-    new MutationObserver(mountButton).observe(document.documentElement, {
+    document.addEventListener('click', event => {
+        if (event.target.closest('.headerCastButton, .castButton')) {
+            castMenuRequestedAt = Date.now();
+            window.setTimeout(addCastMenuOption, 0);
+        }
+    }, true);
+    new MutationObserver(addCastMenuOption).observe(document.documentElement, {
         childList: true,
         subtree: true
     });
-    window.setInterval(mountButton, 2000);
 
     window.JellyCast = { belongsToUser };
 })();

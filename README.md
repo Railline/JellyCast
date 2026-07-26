@@ -1,14 +1,15 @@
 # JellyCast
 
-JellyCast ajoute un bouton permanent **Reprendre ici** à Jellyfin Web. Depuis
-n’importe quel appareil connecté au compte, il permet de récupérer la vidéo
-en cours de lecture sur un autre appareil, à la même position.
+JellyCast ajoute l’action **Reprendre ici** au menu de l’icône Cast native de
+Jellyfin Web. Depuis n’importe quel appareil connecté au compte, elle permet
+de récupérer la vidéo en cours de lecture sur un autre appareil, à la même
+position.
 
 ## Fonctionnement
 
 1. JellyCast injecte son script dans la réponse `index.html` de Jellyfin Web,
    sans modifier les fichiers sur disque.
-2. Le bouton **Reprendre ici** apparaît en bas à droite après la connexion.
+2. L’action **Reprendre ici** apparaît dans le menu de l’icône Cast.
 3. Le plugin liste uniquement les lectures actives des autres appareils
    rattachés au compte courant.
 4. Jellyfin reprend le média sur l’appareil actuel avec la position courante,

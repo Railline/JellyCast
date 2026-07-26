@@ -10,13 +10,15 @@ function loadClient() {
         body: { appendChild() {} },
         getElementById() { return {}; },
         querySelector() { return null; },
+        querySelectorAll() { return []; },
+        addEventListener() {},
         createElement() {
             return { set id(value) {}, set textContent(value) {} };
         }
     };
     class MutationObserver { observe() {} }
     const sandbox = {
-        window: { setInterval() {} },
+        window: { setInterval() {}, setTimeout() {} },
         document,
         navigator: { language: 'fr' },
         MutationObserver,
