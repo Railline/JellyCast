@@ -29,6 +29,5 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>
 
     /// <inheritdoc />
     public override string Description =>
-        "Transfère la lecture en cours vers un autre appareil connecté au même compte.";
+        "Resume active playback on another device signed in to the same account.";
 }
-

@@ -2,14 +2,14 @@
   {
     "name": "JellyCast",
     "guid": "5e1ee9eb-d26b-47f0-b8e0-6cbe9cc3cc43",
-    "description": "Transfère la lecture en cours vers un autre appareil connecté au même compte.",
-    "overview": "Reprenez votre vidéo sur un autre appareil.",
+    "description": "Resume active playback on another device signed in to the same account.",
+    "overview": "Move your current Jellyfin playback between devices.",
     "owner": "Railline",
     "category": "General",
     "versions": [
       {
         "version": "1.0.7.0",
-        "changelog": "Évite de prendre la session native du portable pour un autre appareil et conserve la position avant Pause.",
+        "changelog": "Prevents the current device's native playback session from appearing as another device and snapshots the position before Pause.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.7/Jellyfin.Plugin.JellyCast_1.0.7.0.zip",
         "checksum": "4BC256AAE152DE6B1EC89B4F6038C2D6",
@@ -17,7 +17,7 @@
       },
       {
         "version": "1.0.6.0",
-        "changelog": "Met la source en pause avant le chargement, attend la cible, puis arrête la source. Signale les lecteurs incompatibles.",
+        "changelog": "Pauses the source before loading, waits for target playback, then stops the source. Reports incompatible players.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.6/Jellyfin.Plugin.JellyCast_1.0.6.0.zip",
         "checksum": "3D9128F2C8842930B001CC6F93F4182C",
@@ -25,7 +25,7 @@
       },
       {
         "version": "1.0.5.0",
-        "changelog": "Corrige la récupération des sessions : les lectures actives non contrôlables ne sont plus supprimées par l’API.",
+        "changelog": "Fetches all visible sessions so active non-controllable playback is no longer removed by the API.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.5/Jellyfin.Plugin.JellyCast_1.0.5.0.zip",
         "checksum": "AE2F7EA8B4E6A0FC94F70D7503FDE08E",
@@ -33,7 +33,7 @@
       },
       {
         "version": "1.0.4.0",
-        "changelog": "Corrige la couche invisible du menu Cast qui empêchait de cliquer sur les lectures.",
+        "changelog": "Removes the invisible Cast menu overlay that blocked clicks in the playback list.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.4/Jellyfin.Plugin.JellyCast_1.0.4.0.zip",
         "checksum": "B3169D5B1E7527AAD70E2BE9731E33B8",
@@ -41,7 +41,7 @@
       },
       {
         "version": "1.0.3.0",
-        "changelog": "Détecte les lectures actives même lorsque le lecteur source refuse le contrôle à distance.",
+        "changelog": "Detects active playback even when the source player refuses remote control.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.3/Jellyfin.Plugin.JellyCast_1.0.3.0.zip",
         "checksum": "103814E3DE00A9D63F4081A0F701D3BC",
@@ -49,7 +49,7 @@
       },
       {
         "version": "1.0.2.0",
-        "changelog": "Place Reprendre ici dans le menu de l’icône Cast native et supprime le bouton flottant.",
+        "changelog": "Adds Resume here to Jellyfin's native Cast menu and removes the floating button.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.2/Jellyfin.Plugin.JellyCast_1.0.2.0.zip",
         "checksum": "48AFE86D030D0825CA40D5AE367FD121",
@@ -57,7 +57,7 @@
       },
       {
         "version": "1.0.1.0",
-        "changelog": "Inverse le transfert : reprise locale d’une lecture distante, arrêt de l’ancien appareil et bouton permanent.",
+        "changelog": "Reverses the transfer flow to retrieve remote playback locally and stop the previous device.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.1/Jellyfin.Plugin.JellyCast_1.0.1.0.zip",
         "checksum": "5BBE249565F6C9C3F0252EC9C80F92A9",
@@ -65,7 +65,7 @@
       },
       {
         "version": "1.0.0.0",
-        "changelog": "Première version : bouton de diffusion, filtrage par compte et reprise à la position courante.",
+        "changelog": "Initial release with Cast integration, same-account filtering, and position-aware playback transfer.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.0/Jellyfin.Plugin.JellyCast_1.0.0.0.zip",
         "checksum": "FF7074B76965F001C5BBA851F829EB92",
