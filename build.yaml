@@ -1,0 +1,16 @@
+---
+name: JellyCast
+guid: 5e1ee9eb-d26b-47f0-b8e0-6cbe9cc3cc43
+version: 1.0.0.0
+targetAbi: 10.11.0.0
+framework: net9.0
+overview: Transférez la lecture en cours vers un autre appareil.
+description: >
+  Ajoute un bouton de diffusion au lecteur Jellyfin Web et reprend la vidéo,
+  à la même position, sur un appareil contrôlable connecté au même compte.
+category: General
+owner: Railline
+artifacts:
+  - Jellyfin.Plugin.JellyCast.dll
+changelog: Première version de JellyCast.
+

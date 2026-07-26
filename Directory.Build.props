@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisMode>All</AnalysisMode>
+    <!-- Jellyfin's plugin loader convention requires the main class to be named Plugin. -->
+    <NoWarn>$(NoWarn);CA1724</NoWarn>
+  </PropertyGroup>
+</Project>
