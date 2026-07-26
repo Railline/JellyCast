@@ -6,21 +6,21 @@
 
     const text = {
         fr: {
-            title: 'Diffuser sur un appareil',
-            button: 'Diffuser sur un autre appareil',
-            empty: 'Aucun autre appareil compatible connecté à ce compte.',
-            loading: 'Recherche des appareils…',
-            sent: 'Lecture envoyée vers {device}.',
-            error: 'Impossible de transférer la lecture.',
+            title: 'Reprendre la lecture ici',
+            button: 'Reprendre ici',
+            empty: 'Aucune lecture active sur un autre appareil de ce compte.',
+            loading: 'Recherche des lectures actives…',
+            sent: 'Lecture récupérée depuis {device}.',
+            error: 'Impossible de récupérer la lecture.',
             cancel: 'Annuler'
         },
         en: {
-            title: 'Cast to a device',
-            button: 'Cast to another device',
-            empty: 'No other compatible device is connected to this account.',
-            loading: 'Looking for devices…',
-            sent: 'Playback sent to {device}.',
-            error: 'Playback could not be transferred.',
+            title: 'Resume playback here',
+            button: 'Resume here',
+            empty: 'No active playback was found on another device for this account.',
+            loading: 'Looking for active playback…',
+            sent: 'Playback retrieved from {device}.',
+            error: 'Playback could not be retrieved.',
             cancel: 'Cancel'
         }
     };
@@ -61,43 +61,42 @@
             query: { ControllableByUserId: user.Id }
         });
         const deviceId = currentDeviceId();
-        const source = sessions.find(session => session.DeviceId === deviceId)
-            || sessions.find(session => session.NowPlayingItem && belongsToUser(session, user.Id));
-        const item = source?.NowPlayingItem;
+        const target = sessions.find(session =>
+            session.DeviceId === deviceId && belongsToUser(session, user.Id));
+        if (!target) throw new Error('Current device session unavailable');
 
-        if (!source || !item?.Id) throw new Error('No active local playback session');
-
-        const targets = sessions.filter(session =>
-            session.Id !== source.Id
+        const sources = sessions.filter(session =>
+            session.Id !== target.Id
+            && session.NowPlayingItem?.Id
             && session.SupportsRemoteControl !== false
             && belongsToUser(session, user.Id));
 
-        return { user, source, item, targets };
+        return { user, target, sources };
     }
 
-    async function transfer(target, playback) {
+    async function transfer(source, playback) {
         const query = {
             playCommand: 'PlayNow',
-            itemIds: playback.item.Id,
-            startPositionTicks: playback.source.PlayState?.PositionTicks || 0
+            itemIds: source.NowPlayingItem.Id,
+            startPositionTicks: source.PlayState?.PositionTicks || 0
         };
-        if (playback.source.NowPlayingItem?.MediaSourceId) {
-            query.mediaSourceId = playback.source.NowPlayingItem.MediaSourceId;
+        if (source.NowPlayingItem?.MediaSourceId) {
+            query.mediaSourceId = source.NowPlayingItem.MediaSourceId;
         }
 
-        await request(`Sessions/${encodeURIComponent(target.Id)}/Playing`, {
+        await request(`Sessions/${encodeURIComponent(playback.target.Id)}/Playing`, {
             method: 'POST',
             query,
             dataType: 'text'
         });
 
         try {
-            await request(`Sessions/${encodeURIComponent(playback.source.Id)}/Playing/Pause`, {
+            await request(`Sessions/${encodeURIComponent(source.Id)}/Playing/Stop`, {
                 method: 'POST',
                 dataType: 'text'
             });
         } catch (error) {
-            console.warn('[JellyCast] Target started, but source could not be paused.', error);
+            console.warn('[JellyCast] Local playback started, but the previous device could not be stopped.', error);
         }
     }
 
@@ -138,26 +137,27 @@
         try {
             const playback = await context();
             list.replaceChildren();
-            if (!playback.targets.length) {
+            if (!playback.sources.length) {
                 const empty = document.createElement('p');
                 empty.textContent = strings.empty;
                 list.appendChild(empty);
                 return;
             }
 
-            playback.targets.forEach(target => {
+            playback.sources.forEach(source => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'jellycast-device';
-                const name = target.DeviceName || target.Client || 'Jellyfin';
+                const name = source.DeviceName || source.Client || 'Jellyfin';
                 button.innerHTML = `<span class="material-icons" aria-hidden="true">tv</span>
                     <span><strong></strong><small></small></span>`;
                 button.querySelector('strong').textContent = name;
-                button.querySelector('small').textContent = target.Client || '';
+                button.querySelector('small').textContent =
+                    source.NowPlayingItem?.Name || source.Client || '';
                 button.addEventListener('click', async () => {
                     button.disabled = true;
                     try {
-                        await transfer(target, playback);
+                        await transfer(source, playback);
                         closeDialog(backdrop);
                         toast(strings.sent.replace('{device}', name));
                     } catch (error) {
@@ -179,7 +179,11 @@
         const style = document.createElement('style');
         style.id = 'jellycast-styles';
         style.textContent = `
-            .jellycast-button { color: inherit; }
+            .jellycast-global { position:fixed; z-index:99999; right:1rem; bottom:1rem;
+              display:flex; align-items:center; gap:.45rem; border:0; border-radius:2rem;
+              padding:.65rem .9rem; color:#fff; background:#00a4dc;
+              box-shadow:0 .3rem 1.2rem rgba(0,0,0,.55); font-weight:600; cursor:pointer; }
+            .jellycast-global .material-icons { font-size:1.35rem; }
             .jellycast-dialog { position:fixed; inset:0; z-index:100000; display:grid;
               place-items:center; padding:1rem; background:rgba(0,0,0,.7); opacity:0;
               transition:opacity .15s ease; }
@@ -205,20 +209,19 @@
     }
 
     function mountButton() {
-        const controls = document.querySelector(
-            '#videoOsdPage .buttons, .videoOsdBottom .buttons, [data-testid="video-osd-controls"]');
-        if (!controls || controls.querySelector('.jellycast-button')) return;
-
+        if (document.querySelector('.jellycast-global') || !window.ApiClient) return;
+        const token = typeof window.ApiClient.accessToken === 'function'
+            ? window.ApiClient.accessToken()
+            : true;
+        if (!token) return;
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'jellycast-button autoSize paper-icon-button-light';
-        button.title = t().button;
+        button.className = 'jellycast-global';
         button.setAttribute('aria-label', t().button);
-        button.innerHTML = '<span class="xlargePaperIconButton material-icons" aria-hidden="true">cast</span>';
+        button.innerHTML = `<span class="material-icons" aria-hidden="true">cast_connected</span>
+            <span>${t().button}</span>`;
         button.addEventListener('click', openDialog);
-
-        const settings = controls.querySelector('.btnVideoOsdSettings');
-        controls.insertBefore(button, settings || null);
+        document.body.appendChild(button);
     }
 
     addStyles();
@@ -227,7 +230,7 @@
         childList: true,
         subtree: true
     });
+    window.setInterval(mountButton, 2000);
 
     window.JellyCast = { belongsToUser };
 })();
-

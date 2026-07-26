@@ -15,7 +15,13 @@ function loadClient() {
         }
     };
     class MutationObserver { observe() {} }
-    const sandbox = { window: {}, document, navigator: { language: 'fr' }, MutationObserver, console };
+    const sandbox = {
+        window: { setInterval() {} },
+        document,
+        navigator: { language: 'fr' },
+        MutationObserver,
+        console
+    };
     vm.runInNewContext(
         fs.readFileSync('Jellyfin.Plugin.JellyCast/Web/jellycast.js', 'utf8'),
         sandbox);
@@ -33,4 +39,3 @@ test('accepts an additional user and rejects a different account', () => {
     assert.equal(client.belongsToUser(session, 'USER-1'), true);
     assert.equal(client.belongsToUser(session, 'user-2'), false);
 });
-

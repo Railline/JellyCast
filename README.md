@@ -1,18 +1,18 @@
 # JellyCast
 
-JellyCast ajoute un bouton **Diffuser** au lecteur Jellyfin Web. Il permet de
-reprendre la vidéo en cours, à la même position, sur un autre appareil
-contrôlable connecté au même compte Jellyfin.
+JellyCast ajoute un bouton permanent **Reprendre ici** à Jellyfin Web. Depuis
+n’importe quel appareil connecté au compte, il permet de récupérer la vidéo
+en cours de lecture sur un autre appareil, à la même position.
 
 ## Fonctionnement
 
 1. JellyCast injecte son script dans la réponse `index.html` de Jellyfin Web,
    sans modifier les fichiers sur disque.
-2. Le bouton de diffusion apparaît dans les contrôles du lecteur vidéo.
-3. Le plugin liste uniquement les sessions contrôlables rattachées au compte
-   courant.
-4. Jellyfin envoie sa commande native `PlayNow` à la cible avec la position
-   courante, puis met la source en pause.
+2. Le bouton **Reprendre ici** apparaît en bas à droite après la connexion.
+3. Le plugin liste uniquement les lectures actives des autres appareils
+   rattachés au compte courant.
+4. Jellyfin reprend le média sur l’appareil actuel avec la position courante,
+   puis arrête la lecture sur l’ancien appareil.
 
 Le média reste diffusé directement par votre serveur Jellyfin : JellyCast ne
 relaie pas le flux et ne transmet aucun jeton à un service externe.
