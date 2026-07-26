@@ -11,6 +11,7 @@
             empty: 'Aucune lecture active sur un autre appareil de ce compte.',
             loading: 'Recherche des lectures actives…',
             sent: 'Lecture récupérée depuis {device}.',
+            noControl: 'Lecture reprise, mais {device} refuse les commandes Pause et Stop.',
             error: 'Impossible de récupérer la lecture.',
             cancel: 'Annuler'
         },
@@ -20,6 +21,7 @@
             empty: 'No active playback was found on another device for this account.',
             loading: 'Looking for active playback…',
             sent: 'Playback retrieved from {device}.',
+            noControl: 'Playback resumed, but {device} rejects Pause and Stop commands.',
             error: 'Playback could not be retrieved.',
             cancel: 'Cancel'
         }
@@ -76,6 +78,18 @@
     }
 
     async function transfer(source, playback) {
+        // Freeze the source first so it cannot advance while the destination loads.
+        // Some clients acknowledge this endpoint while ignoring the command; their
+        // SupportsRemoteControl flag is used below to report that limitation.
+        try {
+            await request(`Sessions/${encodeURIComponent(source.Id)}/Playing/Pause`, {
+                method: 'POST',
+                dataType: 'text'
+            });
+        } catch (error) {
+            console.warn('[JellyCast] Previous device could not be paused.', error);
+        }
+
         const query = {
             playCommand: 'PlayNow',
             itemIds: source.NowPlayingItem.Id,
@@ -91,6 +105,19 @@
             dataType: 'text'
         });
 
+        // Native wrappers may create a second playback session after receiving
+        // PlayNow. Wait until any session for the current device reports the item
+        // before stopping the old player.
+        const deadline = Date.now() + 10000;
+        while (Date.now() < deadline) {
+            const sessions = await request('Sessions');
+            const started = sessions.some(session =>
+                session.DeviceId === playback.target.DeviceId
+                && session.NowPlayingItem?.Id === source.NowPlayingItem.Id);
+            if (started) break;
+            await new Promise(resolve => window.setTimeout(resolve, 350));
+        }
+
         try {
             await request(`Sessions/${encodeURIComponent(source.Id)}/Playing/Stop`, {
                 method: 'POST',
@@ -99,6 +126,8 @@
         } catch (error) {
             console.warn('[JellyCast] Local playback started, but the previous device could not be stopped.', error);
         }
+
+        return source.SupportsRemoteControl !== false;
     }
 
     function toast(message) {
@@ -158,9 +187,10 @@
                 button.addEventListener('click', async () => {
                     button.disabled = true;
                     try {
-                        await transfer(source, playback);
+                        const sourceWasControlled = await transfer(source, playback);
                         closeDialog(backdrop);
-                        toast(strings.sent.replace('{device}', name));
+                        toast((sourceWasControlled ? strings.sent : strings.noControl)
+                            .replace('{device}', name));
                     } catch (error) {
                         console.error('[JellyCast] Transfer failed.', error);
                         button.disabled = false;
