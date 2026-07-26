@@ -1,7 +1,7 @@
 ---
 name: JellyCast
 guid: 5e1ee9eb-d26b-47f0-b8e0-6cbe9cc3cc43
-version: 1.0.4.0
+version: 1.0.5.0
 targetAbi: 10.11.0.0
 framework: net9.0
 overview: Transférez la lecture en cours vers un autre appareil.
@@ -12,4 +12,4 @@ category: General
 owner: Railline
 artifacts:
   - Jellyfin.Plugin.JellyCast.dll
-changelog: Ferme proprement le menu Cast pour que la liste des lectures reste cliquable.
+changelog: Récupère toutes les sessions du compte avant de filtrer les lectures actives.

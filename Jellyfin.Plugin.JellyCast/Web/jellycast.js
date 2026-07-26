@@ -57,9 +57,11 @@
     async function context() {
         const api = apiClient();
         const user = await api.getCurrentUser();
-        const sessions = await request('Sessions', {
-            query: { ControllableByUserId: user.Id }
-        });
+        // Do not ask Jellyfin for only "controllable" sessions here. Some clients
+        // (notably Jellyfin Media Player) report active playback while declaring
+        // SupportsRemoteControl=false. The server would omit those sessions before
+        // JellyCast can apply its stricter same-account filtering.
+        const sessions = await request('Sessions');
         const deviceId = currentDeviceId();
         const target = sessions.find(session =>
             session.DeviceId === deviceId && belongsToUser(session, user.Id));
