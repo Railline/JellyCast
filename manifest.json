@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "1.0.11.0",
+        "changelog": "Uses Jellyfin's official client commands and controls every session associated with the source device.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.11/Jellyfin.Plugin.JellyCast_1.0.11.0.zip",
+        "checksum": "04BA03AC028A77F9A8619E1C817606E6",
+        "timestamp": "2026-08-01T20:42:22Z"
+      },
+      {
         "version": "1.0.10.0",
         "changelog": "Prevents stale client scripts with versioned URLs and no-cache response headers.",
         "targetAbi": "10.11.0.0",
