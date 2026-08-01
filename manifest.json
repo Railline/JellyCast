@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "1.0.9.0",
+        "changelog": "Makes playback confirmation non-blocking after a successful transfer and fixes dialog centering in Qt clients.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.9/Jellyfin.Plugin.JellyCast_1.0.9.0.zip",
+        "checksum": "25C99CA0AFC9B7A09546A07EA17A9A98",
+        "timestamp": "2026-08-01T20:14:57Z"
+      },
+      {
         "version": "1.0.8.0",
         "changelog": "Matches Android native and web session identifiers when selecting the current target device.",
         "targetAbi": "10.11.0.0",

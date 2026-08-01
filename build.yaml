@@ -1,7 +1,7 @@
 ---
 name: JellyCast
 guid: 5e1ee9eb-d26b-47f0-b8e0-6cbe9cc3cc43
-version: 1.0.8.0
+version: 1.0.9.0
 targetAbi: 10.11.0.0
 framework: net9.0
 overview: Resume active Jellyfin playback on the current device.
@@ -12,4 +12,4 @@ category: General
 owner: Railline
 artifacts:
   - Jellyfin.Plugin.JellyCast.dll
-changelog: Matches Android native and web session identifiers when selecting the target device.
+changelog: Makes playback confirmation non-blocking and fixes dialog centering in Qt clients.

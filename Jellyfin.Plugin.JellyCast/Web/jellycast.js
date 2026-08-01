@@ -126,11 +126,18 @@
         // before stopping the old player.
         const deadline = Date.now() + 10000;
         while (Date.now() < deadline) {
-            const sessions = await request('Sessions');
-            const started = sessions.some(session =>
-                session.DeviceId === playback.target.DeviceId
-                && session.NowPlayingItem?.Id === source.NowPlayingItem.Id);
-            if (started) break;
+            try {
+                const sessions = await request('Sessions');
+                const started = sessions.some(session =>
+                    isSamePhysicalDevice(session.DeviceId, playback.target.DeviceId)
+                    && session.NowPlayingItem?.Id === source.NowPlayingItem.Id);
+                if (started) break;
+            } catch (error) {
+                // PlayNow has already succeeded. Session refresh is only a best-effort
+                // confirmation and must not turn a successful transfer into an error.
+                console.warn('[JellyCast] Could not refresh target playback state.', error);
+                break;
+            }
             await new Promise(resolve => window.setTimeout(resolve, 350));
         }
 
@@ -227,11 +234,13 @@
         style.id = 'jellycast-styles';
         style.textContent = `
             .jellycast-cast-option { width:100%; }
-            .jellycast-dialog { position:fixed; inset:0; z-index:100000; display:grid;
-              place-items:center; padding:1rem; background:rgba(0,0,0,.7); opacity:0;
+            .jellycast-dialog { position:fixed; top:0; right:0; bottom:0; left:0;
+              z-index:2147483646; display:flex; align-items:center; justify-content:center;
+              box-sizing:border-box; padding:1rem; background:rgba(0,0,0,.7); opacity:0;
               transition:opacity .15s ease; }
             .jellycast-dialog.open { opacity:1; }
-            .jellycast-dialog section { width:min(28rem,100%); max-height:80vh; overflow:auto;
+            .jellycast-dialog section { position:relative; box-sizing:border-box;
+              width:100%; max-width:28rem; max-height:80vh; overflow:auto; margin:auto;
               color:#fff; background:#202020; border-radius:.65rem; padding:1.25rem;
               box-shadow:0 1rem 3rem rgba(0,0,0,.55); }
             .jellycast-dialog h2 { margin:0 0 1rem; font-size:1.35rem; }
@@ -244,7 +253,7 @@
             .jellycast-device span:last-child { display:flex; flex-direction:column; }
             .jellycast-device small { opacity:.7; }
             .jellycast-cancel { text-align:center; margin-top:1rem; background:transparent; }
-            .jellycast-toast { position:fixed; z-index:100001; left:50%; bottom:4rem;
+            .jellycast-toast { position:fixed; z-index:2147483647; left:50%; bottom:4rem;
               transform:translateX(-50%); color:#fff; background:#222; border-radius:.35rem;
               padding:.8rem 1rem; box-shadow:0 .3rem 1.5rem #000; }
         `;
