@@ -10,7 +10,7 @@ namespace Jellyfin.Plugin.JellyCast.Services;
 /// </summary>
 public sealed class ScriptInjectionStartupFilter : IStartupFilter
 {
-    private const string ClientVersion = "1.0.10.0";
+    private const string ClientVersion = "1.0.11.0";
     private const string ScriptPath = "/JellyCast/Client.js?v=" + ClientVersion;
 
     /// <inheritdoc />

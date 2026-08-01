@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const clientVersion = '1.0.10.0';
+    const clientVersion = '1.0.11.0';
     if (window.__jellyCastLoaded === clientVersion) return;
     window.__jellyCastLoaded = clientVersion;
 
@@ -57,6 +57,31 @@
         });
     }
 
+    async function sendPlayStateCommand(sessionId, command) {
+        const api = apiClient();
+        if (typeof api.sendPlayStateCommand === 'function') {
+            return api.sendPlayStateCommand(sessionId, command);
+        }
+
+        return request(`Sessions/${encodeURIComponent(sessionId)}/Playing/${command}`, {
+            method: 'POST',
+            dataType: 'text'
+        });
+    }
+
+    async function sendPlayCommand(sessionId, options) {
+        const api = apiClient();
+        if (typeof api.sendPlayCommand === 'function') {
+            return api.sendPlayCommand(sessionId, options);
+        }
+
+        return request(`Sessions/${encodeURIComponent(sessionId)}/Playing`, {
+            method: 'POST',
+            query: options,
+            dataType: 'text'
+        });
+    }
+
     function belongsToUser(session, userId) {
         if (!session || !userId) return false;
         if (String(session.UserId || '').toLowerCase() === String(userId).toLowerCase()) return true;
@@ -99,7 +124,7 @@
             && session.NowPlayingItem?.Id
             && belongsToUser(session, user.Id));
 
-        return { user, target, sources };
+        return { user, target, sources, sessions };
     }
 
     async function transfer(source, playback) {
@@ -107,41 +132,41 @@
         // replace their session object while processing the command.
         const resumePositionTicks = Number(source.PlayState?.PositionTicks) || 0;
 
-        // Freeze the source first so it cannot advance while the destination loads.
-        // Some clients acknowledge this endpoint while ignoring the command; their
-        // SupportsRemoteControl flag is used below to report that limitation.
-        try {
-            await request(`Sessions/${encodeURIComponent(source.Id)}/Playing/Pause`, {
-                method: 'POST',
-                dataType: 'text'
-            });
-        } catch (error) {
-            console.warn('[JellyCast] Previous device could not be paused.', error);
+        // Native wrappers may expose both a web session and a playback session.
+        // Pause every session for the source device using Jellyfin's official client
+        // helper so the command is serialized exactly as Jellyfin Web expects.
+        const relatedSourceSessions = playback.sessions.filter(session =>
+            isSamePhysicalDevice(session.DeviceId, source.DeviceId)
+            && belongsToUser(session, playback.user.Id));
+        const sourceSessionIds = [...new Set([source, ...relatedSourceSessions]
+            .map(session => session.Id)
+            .filter(Boolean))];
+        const pauseResults = await Promise.allSettled(sourceSessionIds.map(sessionId =>
+            sendPlayStateCommand(sessionId, 'Pause')));
+        if (pauseResults.every(result => result.status === 'rejected')) {
+            console.warn('[JellyCast] Previous device could not be paused.', pauseResults);
         }
 
-        const query = {
-            playCommand: 'PlayNow',
-            itemIds: source.NowPlayingItem.Id,
-            startPositionTicks: resumePositionTicks
+        const playOptions = {
+            PlayCommand: 'PlayNow',
+            ItemIds: source.NowPlayingItem.Id,
+            StartPositionTicks: resumePositionTicks
         };
         if (source.NowPlayingItem?.MediaSourceId) {
-            query.mediaSourceId = source.NowPlayingItem.MediaSourceId;
+            playOptions.MediaSourceId = source.NowPlayingItem.MediaSourceId;
         }
 
-        await request(`Sessions/${encodeURIComponent(playback.target.Id)}/Playing`, {
-            method: 'POST',
-            query,
-            dataType: 'text'
-        });
+        await sendPlayCommand(playback.target.Id, playOptions);
 
         // Native wrappers may create a second playback session after receiving
         // PlayNow. Wait until any session for the current device reports the item
         // before stopping the old player.
         const deadline = Date.now() + 10000;
+        let latestSessions = playback.sessions;
         while (Date.now() < deadline) {
             try {
-                const sessions = await request('Sessions');
-                const started = sessions.some(session =>
+                latestSessions = await request('Sessions');
+                const started = latestSessions.some(session =>
                     isSamePhysicalDevice(session.DeviceId, playback.target.DeviceId)
                     && session.NowPlayingItem?.Id === source.NowPlayingItem.Id);
                 if (started) break;
@@ -154,16 +179,37 @@
             await new Promise(resolve => window.setTimeout(resolve, 350));
         }
 
-        try {
-            await request(`Sessions/${encodeURIComponent(source.Id)}/Playing/Stop`, {
-                method: 'POST',
-                dataType: 'text'
-            });
-        } catch (error) {
-            console.warn('[JellyCast] Local playback started, but the previous device could not be stopped.', error);
+        const currentSourceIds = latestSessions
+            .filter(session =>
+                isSamePhysicalDevice(session.DeviceId, source.DeviceId)
+                && belongsToUser(session, playback.user.Id))
+            .map(session => session.Id)
+            .filter(Boolean);
+        const stopSessionIds = [...new Set([...sourceSessionIds, ...currentSourceIds])];
+        const stopResults = await Promise.allSettled(stopSessionIds.map(sessionId =>
+            sendPlayStateCommand(sessionId, 'Stop')));
+        if (stopResults.every(result => result.status === 'rejected')) {
+            console.warn('[JellyCast] Local playback started, but the previous device could not be stopped.', stopResults);
         }
 
-        return source.SupportsRemoteControl !== false;
+        // A 204 response only means Jellyfin accepted the command. Confirm that the
+        // old device really stopped instead of trusting SupportsRemoteControl.
+        const stopDeadline = Date.now() + 4000;
+        while (Date.now() < stopDeadline) {
+            try {
+                const sessions = await request('Sessions');
+                const stillPlaying = sessions.some(session =>
+                    isSamePhysicalDevice(session.DeviceId, source.DeviceId)
+                    && session.NowPlayingItem?.Id === source.NowPlayingItem.Id);
+                if (!stillPlaying) return true;
+            } catch (error) {
+                console.warn('[JellyCast] Could not confirm that the previous device stopped.', error);
+                break;
+            }
+            await new Promise(resolve => window.setTimeout(resolve, 350));
+        }
+
+        return false;
     }
 
     function toast(message) {
@@ -347,5 +393,11 @@
         subtree: true
     });
 
-    window.JellyCast = { clientVersion, interfaceLanguage, belongsToUser, isSamePhysicalDevice };
+    window.JellyCast = {
+        clientVersion,
+        interfaceLanguage,
+        belongsToUser,
+        isSamePhysicalDevice,
+        transfer
+    };
 })();
