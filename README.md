@@ -35,6 +35,12 @@ active playback while declaring `SupportsRemoteControl: false`. JellyCast can
 resume their media elsewhere, but those clients may ignore the automatic
 Pause and Stop commands.
 
+## Localization
+
+JellyCast follows the interface language selected by Jellyfin Web. French and
+English interface strings are included, with English used as the fallback for
+other locales.
+
 ## Installation
 
 In Jellyfin, open **Dashboard → Plugins → Repositories** and add:

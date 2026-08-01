@@ -3,9 +3,12 @@ const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-function loadClient() {
+function loadClient(language = 'fr') {
     const document = {
-        documentElement: { lang: 'fr' },
+        documentElement: {
+            lang: language,
+            getAttribute(name) { return name === 'lang' ? language : null; }
+        },
         head: { appendChild() {} },
         body: { appendChild() {} },
         getElementById() { return {}; },
@@ -50,4 +53,10 @@ test('recognizes Android UI and native playback sessions as the same device', ()
             '824b3ed573f32579076de1f7727447e0a316f8d52f63e5e2'),
         true);
     assert.equal(client.isSamePhysicalDevice('phone-1', 'desktop-1'), false);
+});
+
+test('uses the Jellyfin interface language with an English fallback', () => {
+    assert.equal(loadClient('fr-FR').interfaceLanguage(), 'fr');
+    assert.equal(loadClient('en-US').interfaceLanguage(), 'en');
+    assert.equal(loadClient('de-DE').interfaceLanguage(), 'en');
 });

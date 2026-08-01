@@ -1,8 +1,9 @@
 (() => {
     'use strict';
 
-    if (window.__jellyCastLoaded) return;
-    window.__jellyCastLoaded = true;
+    const clientVersion = '1.0.10.0';
+    if (window.__jellyCastLoaded === clientVersion) return;
+    window.__jellyCastLoaded = clientVersion;
 
     const text = {
         fr: {
@@ -27,8 +28,20 @@
         }
     };
 
-    const t = () => text[(document.documentElement.lang || navigator.language || 'en')
-        .toLowerCase().startsWith('fr') ? 'fr' : 'en'];
+    function interfaceLanguage() {
+        const locale = document.documentElement.getAttribute?.('lang')
+            || document.documentElement.lang
+            || navigator.language
+            || 'en';
+        return String(locale).toLowerCase().startsWith('fr') ? 'fr' : 'en';
+    }
+
+    const t = () => text[interfaceLanguage()];
+
+    function errorMessage(strings, error) {
+        const status = Number(error?.status || error?.statusCode) || 0;
+        return status ? `${strings.error} (HTTP ${status})` : strings.error;
+    }
 
     function apiClient() {
         if (!window.ApiClient) throw new Error('ApiClient unavailable');
@@ -217,7 +230,7 @@
                     } catch (error) {
                         console.error('[JellyCast] Transfer failed.', error);
                         button.disabled = false;
-                        toast(strings.error);
+                        toast(errorMessage(strings, error));
                     }
                 });
                 list.appendChild(button);
@@ -334,5 +347,5 @@
         subtree: true
     });
 
-    window.JellyCast = { belongsToUser, isSamePhysicalDevice };
+    window.JellyCast = { clientVersion, interfaceLanguage, belongsToUser, isSamePhysicalDevice };
 })();

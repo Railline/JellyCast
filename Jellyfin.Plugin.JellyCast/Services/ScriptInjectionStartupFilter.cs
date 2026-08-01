@@ -10,7 +10,8 @@ namespace Jellyfin.Plugin.JellyCast.Services;
 /// </summary>
 public sealed class ScriptInjectionStartupFilter : IStartupFilter
 {
-    private const string ScriptPath = "/JellyCast/Client.js";
+    private const string ClientVersion = "1.0.10.0";
+    private const string ScriptPath = "/JellyCast/Client.js?v=" + ClientVersion;
 
     /// <inheritdoc />
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
@@ -80,6 +81,9 @@ public sealed class ScriptInjectionStartupFilter : IStartupFilter
         context.Response.Headers.Remove("ETag");
         context.Response.Headers.Remove("Last-Modified");
         context.Response.Headers.Remove("Accept-Ranges");
+        context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+        context.Response.Headers["Pragma"] = "no-cache";
+        context.Response.Headers["Expires"] = "0";
         await originalBody.WriteAsync(bytes).ConfigureAwait(false);
     }
 
