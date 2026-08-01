@@ -12,9 +12,14 @@ public sealed class JellyCastController : ControllerBase
     /// <summary>Returns the JellyCast browser script.</summary>
     [HttpGet("Client.js")]
     [AllowAnonymous]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     [Produces("application/javascript")]
     public ActionResult GetClientScript()
     {
+        Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+        Response.Headers["Pragma"] = "no-cache";
+        Response.Headers["Expires"] = "0";
+
         var assembly = typeof(JellyCastController).Assembly;
         using var stream = assembly.GetManifestResourceStream(
             "Jellyfin.Plugin.JellyCast.Web.jellycast.js");
@@ -28,4 +33,3 @@ public sealed class JellyCastController : ControllerBase
         return Content(reader.ReadToEnd(), "application/javascript; charset=utf-8");
     }
 }
-
