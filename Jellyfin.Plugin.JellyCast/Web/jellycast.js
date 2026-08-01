@@ -72,8 +72,12 @@
         // JellyCast can apply its stricter same-account filtering.
         const sessions = await request('Sessions');
         const deviceId = currentDeviceId();
+        // Android can append the user id to its native session device id while
+        // ApiClient.deviceId() keeps the shorter web id. Treat both forms as the
+        // same physical destination instead of requiring an exact match.
         const target = sessions.find(session =>
-            session.DeviceId === deviceId && belongsToUser(session, user.Id));
+            isSamePhysicalDevice(session.DeviceId, deviceId)
+            && belongsToUser(session, user.Id));
         if (!target) throw new Error('Current device session unavailable');
 
         const sources = sessions.filter(session =>

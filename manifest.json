@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "1.0.8.0",
+        "changelog": "Matches Android native and web session identifiers when selecting the current target device.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.8/Jellyfin.Plugin.JellyCast_1.0.8.0.zip",
+        "checksum": "39E335FBB11B4DF5FF90DB23525DBA2B",
+        "timestamp": "2026-08-01T13:36:39Z"
+      },
+      {
         "version": "1.0.7.0",
         "changelog": "Prevents the current device's native playback session from appearing as another device and snapshots the position before Pause.",
         "targetAbi": "10.11.0.0",
