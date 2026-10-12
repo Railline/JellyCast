@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "1.0.18.0",
+        "changelog": "Starts playback locally on the receiving client, including Android sessions that reject remote PlayNow commands.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Railline/JellyCast/releases/download/v1.0.18/Jellyfin.Plugin.JellyCast_1.0.18.0.zip",
+        "checksum": "E4C7DF3610245401F1299D7C5C6CA50D",
+        "timestamp": "2026-10-12T18:15:14Z"
+      },
+      {
         "version": "1.0.11.0",
         "changelog": "Uses Jellyfin's official client commands and controls every session associated with the source device.",
         "targetAbi": "10.11.0.0",

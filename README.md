@@ -21,14 +21,16 @@ services.
 
 ## Compatibility
 
-- Jellyfin Server 10.11.x
+- Jellyfin Server 10.11.x and 12.2.x
 - Jellyfin Web classic layout
-- Target devices that accept Jellyfin remote playback commands
+- Jellyfin Web, Jellyfin Media Player, and Jellyfin Android clients that embed Jellyfin Web
 
 The Cast menu integration uses an unofficial Jellyfin Web extension point.
 A major user-interface update may therefore require selector adjustments.
 Native clients that do not embed Jellyfin Web will not show the JellyCast
 action, but they can still participate when they expose compatible sessions.
+On the receiving device, JellyCast uses that client's local playback manager;
+this also supports Android sessions that intentionally disable remote control.
 
 Some clients, including certain Jellyfin Media Player versions, may report
 active playback while declaring `SupportsRemoteControl: false`. JellyCast can
@@ -78,8 +80,8 @@ dotnet build
 ## Security
 
 JellyCast reuses the current Jellyfin client's authentication. Client-side
-filtering restricts sources to the current account, while the Jellyfin server
-still enforces remote-control permissions for every command.
+filtering restricts sources to the current account. Source-device Pause and
+Stop commands remain subject to the Jellyfin server's remote-control policy.
 
 ## License
 
