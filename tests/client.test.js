@@ -3,7 +3,7 @@ const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-function loadClient(language = 'fr', apiClient) {
+function loadClient(language = 'fr', apiClient, windowValues = {}) {
     const document = {
         documentElement: {
             lang: language,
@@ -21,7 +21,12 @@ function loadClient(language = 'fr', apiClient) {
     };
     class MutationObserver { observe() {} }
     const sandbox = {
-        window: { ApiClient: apiClient, setInterval() {}, setTimeout() {} },
+        window: {
+            ApiClient: apiClient,
+            setInterval() {},
+            setTimeout() {},
+            ...windowValues
+        },
         document,
         navigator: { language: 'fr' },
         MutationObserver,
@@ -114,4 +119,65 @@ test('uses official Jellyfin commands for transfer playback and state', async ()
     assert.deepEqual(calls[2], {
         type: 'state', sessionId: 'source-session', command: 'Stop'
     });
+});
+
+test('starts playback locally when the Jellyfin playback manager is available', async () => {
+    const stateCalls = [];
+    const localPlayCalls = [];
+    const item = { Id: 'item-1', MediaSourceId: 'media-source-1' };
+    const source = {
+        Id: 'source-session',
+        UserId: 'user-1',
+        DeviceId: 'source-device',
+        NowPlayingItem: item,
+        PlayState: { PositionTicks: 987654321 }
+    };
+    const target = {
+        Id: 'target-session',
+        UserId: 'user-1',
+        DeviceId: 'target-device'
+    };
+    const apiClient = {
+        getUrl(path) {
+            return path;
+        },
+        serverId() {
+            return 'server-1';
+        },
+        async sendPlayStateCommand(sessionId, command) {
+            stateCalls.push({ sessionId, command });
+        },
+        async sendPlayCommand() {
+            throw new Error('remote playback should not be used');
+        },
+        async ajax() {
+            return [{ ...target, NowPlayingItem: item }];
+        }
+    };
+    const playbackManager = {
+        async play(options) {
+            localPlayCalls.push(options);
+        }
+    };
+    const client = loadClient('en', apiClient, {
+        __jellyCastPlaybackManager: playbackManager
+    });
+
+    const stopped = await client.transfer(source, {
+        user: { Id: 'user-1' },
+        target,
+        sessions: [source, target]
+    });
+
+    assert.equal(stopped, true);
+    assert.deepEqual(JSON.parse(JSON.stringify(localPlayCalls)), [{
+        ids: ['item-1'],
+        startPositionTicks: 987654321,
+        serverId: 'server-1',
+        mediaSourceId: 'media-source-1'
+    }]);
+    assert.deepEqual(stateCalls, [
+        { sessionId: 'source-session', command: 'Pause' },
+        { sessionId: 'source-session', command: 'Stop' }
+    ]);
 });
